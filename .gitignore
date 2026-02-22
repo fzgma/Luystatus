@@ -1,0 +1,57 @@
+
+# OS / Editor
+
+.DS_Store
+Thumbs.db
+
+
+# Android / Gradle build
+
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+/build/
+/app/build/
+
+
+# Gradle
+
+.gradle/
+local.properties
+
+
+# Android Studio / IntelliJ
+
+.idea/
+*.iml
+
+
+# Kotlin
+
+.kotlin/
+
+
+# Logs
+
+*.log
+
+
+# Native build
+
+.cxx/
+.externalNativeBuild/
+
+
+# Temporary / cache
+
+tmp/
+out/
+
+
+
+/app/src/test/
+/app/src/androidTest/
+/app/proguard-rules.pro
