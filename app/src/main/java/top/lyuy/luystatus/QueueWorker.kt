@@ -53,7 +53,7 @@ class QueueWorker(
 
             val maxIndex = items.maxOf { it.index }
 
-            // ✅ index 回退 → 新 session
+            //  index 回退 → 新 session
             if (maxIndex < lastConfirmed) {
                 sessionId++
                 lastConfirmed = -1
@@ -66,7 +66,7 @@ class QueueWorker(
                 }
             }
 
-            // ✅ 如果当前没有 pending，找下一个
+            //  如果当前没有 pending，找下一个
             if (pending.toLong() == -1L) {
                 val next = items
                     .filter { it.index > lastConfirmed }
@@ -81,16 +81,20 @@ class QueueWorker(
                 }
             }
 
-            // ✅ 判断是否需要提醒
+            //  判断是否需要提醒，每60s至多一次
             val shouldNotify =
-                lastNotifyTime == 0L || now - lastNotifyTime >= 90_000L
+                lastNotifyTime == 0L || now - lastNotifyTime >= 60_000L
 
             if (shouldNotify) {
-                val item = items.first { it.index.toLong() == pending }
-
-                prefs.edit {
-                    putLong(KEY_LAST_NOTIFY_TIME, now)
-                }
+                val item = items.firstOrNull { it.index.toLong() == pending }
+                    ?: run {
+                        // 如果已被其他程序pop掉，pending 已经不存在，直接清理本地状态
+                        prefs.edit {
+                            putLong(KEY_PENDING_INDEX, -1L)
+                            putLong(KEY_LAST_NOTIFY_TIME, 0L)
+                        }
+                        return Result.success()
+                    }
 
                 NotificationHelper.showQueueNotification(
                     context = applicationContext,
@@ -111,10 +115,10 @@ class QueueWorker(
 
 
 
-    //每30s轮询一次
+    // 每25s轮询一次
     private fun enqueueNext() {
         val request = OneTimeWorkRequestBuilder<QueueWorker>()
-            .setInitialDelay(15, TimeUnit.SECONDS)
+            .setInitialDelay(25, TimeUnit.SECONDS)
             .build()
 
         WorkManager.getInstance(applicationContext)
