@@ -54,4 +54,5 @@ out/
 
 /app/src/test/
 /app/src/androidTest/
-/app/proguard-rules.pro
+gradle-daemon-jvm.properties
+/app/release/
