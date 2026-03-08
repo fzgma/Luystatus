@@ -34,6 +34,36 @@ private fun checkNotificationPermission(context: Context): Boolean {
         true
     }
 }
+private const val PREF_IMMEDIATE_LOCK = "queue_immediate_lock"
+private const val KEY_LAST_IMMEDIATE_TIME = "last_immediate_time"
+private const val IMMEDIATE_INTERVAL_MS = 2_500L
+
+private fun tryEnqueueImmediate(
+    context: Context,
+    onRejected: () -> Unit = {},
+    onAccepted: () -> Unit = {}
+) {
+    val prefs = context.getSharedPreferences(
+        PREF_IMMEDIATE_LOCK,
+        Context.MODE_PRIVATE
+    )
+
+    val now = System.currentTimeMillis()
+    val last = prefs.getLong(KEY_LAST_IMMEDIATE_TIME, 0L)
+
+    if (now - last < IMMEDIATE_INTERVAL_MS) {
+        onRejected()
+        return
+    }
+
+    //  先写锁，防止并发点击
+    prefs.edit {
+        putLong(KEY_LAST_IMMEDIATE_TIME, now)
+    }
+
+    QueueWorker.enqueueImmediate(context)
+    onAccepted()
+}
 
 @Preview
 @Composable
@@ -148,15 +178,30 @@ fun SettingsScreen() {
             }
             Button(
                 onClick = {
-                    QueueWorker.enqueueImmediate(context)
-
-                    scope.launch {
-                        snackbarHostState.showSnackbar("已立即查询一次")
-                    }
-                }
-            ) {
+                    tryEnqueueImmediate(
+                        context = context,
+                        onRejected = {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    "操作过于频繁，请稍后再试"
+                                )
+                            }
+                        },
+                        onAccepted = {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    "已立即查询一次"
+                                )
+                            }
+                        }
+                    )
+                },
+                enabled = apiKey.isNotBlank()
+            )
+            {
                 Text("立即查询")
             }
+
         }
     }
 }

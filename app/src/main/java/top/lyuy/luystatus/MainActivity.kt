@@ -8,7 +8,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
-import top.lyuy.luystatus.SettingsScreen
 import top.lyuy.luystatus.ui.theme.LuyStatusTheme
 
 class MainActivity : ComponentActivity() {

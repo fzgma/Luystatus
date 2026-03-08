@@ -2,6 +2,7 @@ package top.lyuy.luystatus.queue
 
 
 import android.content.SharedPreferences
+import android.util.Log
 import top.lyuy.luystatus.notify.NotificationHelper
 import top.lyuy.luystatus.api.ListItem
 import androidx.core.content.edit
@@ -13,6 +14,8 @@ object QueueStateMachine {
     private const val KEY_PENDING_INDEX = "pending_index"
     private const val KEY_FIRST_NOTIFY_TIME = "first_notify_time"
     private const val KEY_LAST_NOTIFY_TIME = "last_notify_time"
+
+    private const val TAG = "QueueStateMachine"
 
     data class Decision(
         val shouldNotify: Boolean,
@@ -69,7 +72,7 @@ object QueueStateMachine {
      * 2. 检测 index 是否回退，必要时重置 session 与状态
      * 3. 若当前无 pending 项，选择下一个待处理 index 作为 pending
      * 4. 校验 pending 是否仍存在于当前列表中，不存在则清理状态
-     * 5. 判断是否命中通知频率限制（10 秒）
+     * 5. 判断是否命中通知频率限制（2.5秒）
      * 6. 根据首次通知时间与已持续时间，选择通知通道：
      *    - 新任务通知
      *    - 重复提醒
@@ -113,6 +116,7 @@ object QueueStateMachine {
         if (items.isEmpty()) {
             return Decision(false, null, sessionId, null)
         }
+        Log.i(TAG,"item为空，返回不通知")
 
         val maxIndex = items.maxOf { it.index }
 
@@ -158,8 +162,8 @@ object QueueStateMachine {
             return Decision(false, null, sessionId, null)
         }
 
-        // 频率限制：1 秒
-        if (lastNotifyTime != 0L && now - lastNotifyTime < 1_000L) {
+        // 频率限制：2.5 秒
+        if (lastNotifyTime != 0L && now - lastNotifyTime < 2_500L) {
             return Decision(false, null, sessionId, null)
         }
 

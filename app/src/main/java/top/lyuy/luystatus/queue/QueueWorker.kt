@@ -109,7 +109,7 @@ class QueueWorker(
 
         try {
             val items = ApiProvider.api.list().items
-            Log.v("QueueWorker", "item=$items")
+            Log.v(TAG, "item=$items")
             val now = System.currentTimeMillis()
 
             val decision =
